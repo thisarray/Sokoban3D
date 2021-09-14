@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test sokoban</title>
+  <script src="../jsgame0.js"></script>
+  <script src="test.js"></script>
+  <script src="sokoban.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+  </style>
+</head>
+
+<body>
+
+<main>
+<h1>Test sokoban</h1>
+</main>
+
+<script>
+function test_constants() {
+  test.assertEqual(COMMENT, ';');
+  test.assertEqual(PLAYER, '@');
+  test.assertEqual(PLAYER_ON_STORAGE, '+');
+  test.assertEqual(BOX, '$');
+  test.assertEqual(BOX_ON_STORAGE, '*');
+  test.assertEqual(STORAGE, '.');
+  test.assertEqual(WALL, '#');
+  test.assertEqual(EMPTY, ' ');
+
+  test.assertEqual(VIEW_LIMIT, 8);
+  test.assertEqual(START_DIRECTION, 0);
+}
+
+function test_parseLevels() {
+  for (let value of [42, []]) {
+    test.assertRaises(TypeError, parseLevels, value);
+  }
+  for (let value of ['', ';', '; foobar', '; ####',
+                     '\n', ';\n', '; foobar\n', '; ####\n',
+                     '\n\n', ';\n\n', '; foobar\n\n', '; ####\n\n',
+                     // Missing trailing newline
+                     '###\n#+#\n#$#\n###', '####\n#$+#\n####']) {
+    test.assertEqual(parseLevels(value), []);
+  }
+  let levels = parseLevels('###\n#+#\n#$#\n###\n');
+  test.assertEqual(levels.length, 1);
+  test.assertEqual(levels[0], [
+    [WALL, WALL, WALL, WALL],
+    [WALL, PLAYER_ON_STORAGE, BOX, WALL],
+    [WALL, WALL, WALL, WALL]]);
+
+  levels = parseLevels(' # \n#*#\n#@#\n #\n');
+  test.assertEqual(levels.length, 1);
+  test.assertEqual(levels[0], [
+    [EMPTY, WALL, WALL, EMPTY],
+    [WALL, BOX_ON_STORAGE, PLAYER, WALL],
+    [EMPTY, WALL, WALL, EMPTY]]);
+
+  levels = parseLevels('####\n#$+#\n####\n\n ## \n#@*#\n ##\n');
+  test.assertEqual(levels.length, 2);
+  test.assertEqual(levels[0], [
+    [WALL, WALL, WALL],
+    [WALL, BOX, WALL],
+    [WALL, PLAYER_ON_STORAGE, WALL],
+    [WALL, WALL, WALL]]);
+  test.assertEqual(levels[1], [
+    [EMPTY, WALL, EMPTY],
+    [WALL, PLAYER, WALL],
+    [WALL, BOX_ON_STORAGE, WALL],
+    [EMPTY, WALL, EMPTY]]);
+}
+
+function test_bad_level() {
+  let game;
+  try {
+    game = new Game(42);
+    console.assert(false, 'TypeError not raised.');
+  }
+  catch (error) {
+    test.assertTrue(error instanceof TypeError);
+  }
+}
+
+function test_Game() {
+  let levels = parseLevels('###\n#+#\n#$#\n###\n\n # \n#*#\n#@#\n #\n\n'),
+      game;
+  test.assertEqual(levels.length, 2);
+
+  game = new Game(levels[0]);
+  test.assertEqual(game.playerX, 1);
+  test.assertEqual(game.playerY, 1);
+  test.assertEqual(game.direction, START_DIRECTION);
+  test.assertEqual(game.stepCount, 0);
+  test.assertEqual(game.boxes, [[1, 2]]);
+  test.assertEqual(game.storages, [[1, 1]]);
+  test.assertEqual(game.level, levels[0]);
+  test.assertFalse(game.isLevelComplete());
+  test.assertFalse(game.isBlocked(1, 1));
+  test.assertTrue(game.isBlocked(1, 2));
+  test.assertFalse(game.isBox(1, 1));
+  test.assertTrue(game.isBox(1, 2));
+  test.assertTrue(game.isStorage(1, 1));
+  test.assertFalse(game.isStorage(1, 2));
+  test.assertFalse(game.isWall(1, 1));
+  test.assertFalse(game.isWall(1, 2));
+
+  test.assertTrue(game.isBlocked(0, -1));
+  test.assertFalse(game.isBox(0, -1));
+  test.assertFalse(game.isStorage(0, -1));
+  test.assertFalse(game.isWall(0, -1));
+  test.assertTrue(game.isBlocked(0, 42));
+  test.assertFalse(game.isBox(0, 42));
+  test.assertFalse(game.isStorage(0, 42));
+  test.assertFalse(game.isWall(0, 42));
+  for (let y = 0; y < 4; y++) {
+    test.assertTrue(game.isBlocked(-1, y));
+    test.assertFalse(game.isBox(-1, y));
+    test.assertFalse(game.isStorage(-1, y));
+    test.assertFalse(game.isWall(-1, y));
+    test.assertTrue(game.isBlocked(42, y));
+    test.assertFalse(game.isBox(42, y));
+    test.assertFalse(game.isStorage(42, y));
+    test.assertFalse(game.isWall(42, y));
+
+    test.assertTrue(game.isBlocked(0, y));
+    test.assertTrue(game.isBlocked(2, y));
+    test.assertTrue(game.isWall(0, y));
+    test.assertTrue(game.isWall(2, y));
+  }
+  test.assertFalse(game.move());
+
+  game = new Game(levels[1]);
+  test.assertEqual(game.playerX, 1);
+  test.assertEqual(game.playerY, 2);
+  test.assertEqual(game.direction, START_DIRECTION);
+  test.assertEqual(game.stepCount, 0);
+  test.assertEqual(game.boxes, [[1, 1]]);
+  test.assertEqual(game.storages, [[1, 1]]);
+  test.assertEqual(game.level, levels[1]);
+  test.assertTrue(game.isLevelComplete());
+  test.assertTrue(game.isBlocked(1, 1));
+  test.assertFalse(game.isBlocked(1, 2));
+  test.assertTrue(game.isBox(1, 1));
+  test.assertFalse(game.isBox(1, 2));
+  test.assertTrue(game.isStorage(1, 1));
+  test.assertFalse(game.isStorage(1, 2));
+  test.assertFalse(game.isWall(1, 1));
+  test.assertFalse(game.isWall(1, 2));
+
+  test.assertFalse(game.isBlocked(0, 0));
+  test.assertFalse(game.isWall(0, 0));
+  for (let y = 1; y < 3; y++) {
+    test.assertTrue(game.isBlocked(0, y));
+    test.assertTrue(game.isBlocked(2, y));
+    test.assertTrue(game.isWall(0, y));
+    test.assertTrue(game.isWall(2, y));
+  }
+  test.assertFalse(game.move());
+}
+
+test.main();
+</script>
+</body>
+
+</html>
