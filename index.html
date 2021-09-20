@@ -5031,8 +5031,13 @@ Once you have a mental picture of the level, then you can plan your moves.</p>
 WIDTH = Math.pow(2, VIEW_LIMIT + 1);
 HEIGHT = Math.pow(2, VIEW_LIMIT + 1);
 
-const BOX_COLOR = 'brown';
+/*
+ * Color of the box - partly transparent so you can see through it.
+ */
+const BOX_COLOR = [165, 42, 42, 165];
+
 const STORAGE_COLOR = 'green';
+
 const OUTLINE_COLOR = 'black';
 
 /*
@@ -5089,16 +5094,11 @@ function drawBlock(offset, distance, blockType) {
     screen.draw.filled_rect(wall, STRAIGHT_COLOR);
   }
   else if (blockType === 'box') {
-    wall.inflate_ip(-nextWidth, -nextHeight);
-    wall.move_ip(0, wall.height / 2);
     screen.draw.filled_rect(wall, BOX_COLOR);
     screen.draw.rect(wall, OUTLINE_COLOR);
 
     if (offset !== 0) {
       nextWall.move_ip(nextWidth * offset, 0);
-      nextWall.inflate_ip(-(nextWidth / 2), -(nextHeight / 2));
-      nextWall.move_ip(0, nextWall.height / 2);
-
       if (offset < 0) {
         // Draw the right side of the box for a box on the left side
         screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], BOX_COLOR);
