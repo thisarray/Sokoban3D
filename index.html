@@ -5099,46 +5099,42 @@ function drawBlock(offset, distance, blockType) {
       nextWall = new Rect(Math.floor((WIDTH - nextWidth) / 2), Math.floor((HEIGHT - nextHeight) / 2), nextWidth, nextHeight);
 
   if ((width < 2) || (height < 2)) {
-    // Don't draw if the block is too far away (too small)
+    // Don't draw the block if it is too far away (too small)
     return;
   }
 
-  wall.move_ip(width * offset, 0);
+  wall.move_ip(wall.width * offset, 0);
+  nextWall.move_ip(nextWall.width * offset, 0);
+
   blockType = blockType.trim().toLowerCase();
   if (blockType === 'left') {
     // Draw the right side of the wall for a corner on the left side
     console.assert(offset < 0, 'offset is positive!');
-    nextWall.move_ip(nextWidth * (offset + 1), 0);
-    screen.draw.filled_polygon([wall.topright, nextWall.topleft, nextWall.bottomleft, wall.bottomright], DIAGONAL_COLOR);
+    screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], DIAGONAL_COLOR);
     screen.draw.filled_rect(wall, STRAIGHT_COLOR);
   }
   else if (blockType === 'right') {
     // Draw the left side of the wall for a corner on the right side
     console.assert(offset > 0, 'offset is negative!');
-    nextWall.move_ip(nextWidth * (offset - 1), 0);
-    screen.draw.filled_polygon([wall.topleft, nextWall.topright, nextWall.bottomright, wall.bottomleft], DIAGONAL_COLOR);
+    screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], DIAGONAL_COLOR);
     screen.draw.filled_rect(wall, STRAIGHT_COLOR);
   }
   else if (blockType === 'box') {
     screen.draw.filled_rect(wall, BOX_COLOR);
     screen.draw.rect(wall, OUTLINE_COLOR);
 
-    if (offset !== 0) {
-      nextWall.move_ip(nextWidth * offset, 0);
-      if (offset < 0) {
-        // Draw the right side of the box for a box on the left side
-        screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], BOX_COLOR);
-        screen.draw.polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], OUTLINE_COLOR);
-      }
-      else {
-        // Draw the left side of the box for a box on the right side
-        screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], BOX_COLOR);
-        screen.draw.polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], OUTLINE_COLOR);
-      }
+    if (offset < 0) {
+      // Draw the right side of the box for a box on the left side
+      screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], BOX_COLOR);
+      screen.draw.polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], OUTLINE_COLOR);
+    }
+    else if (offset > 0) {
+      // Draw the left side of the box for a box on the right side
+      screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], BOX_COLOR);
+      screen.draw.polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], OUTLINE_COLOR);
     }
   }
   else if (blockType === 'storage') {
-    nextWall.move_ip(nextWidth * offset, 0);
     screen.draw.filled_polygon([wall.bottomleft, nextWall.bottomleft, nextWall.bottomright, wall.bottomright], STORAGE_COLOR);
     screen.draw.polygon([wall.bottomleft, nextWall.bottomleft, nextWall.bottomright, wall.bottomright], OUTLINE_COLOR);
   }
