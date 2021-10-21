@@ -5058,13 +5058,19 @@ WIDTH = Math.pow(2, VIEW_LIMIT + 1);
 HEIGHT = Math.pow(2, VIEW_LIMIT + 1);
 
 /*
- * Color of the box - partly transparent so you can see through it.
+ * Color of the box.
  */
-const BOX_COLOR = [165, 42, 42, 165];
+const BOX_COLOR = 'brown';
 
-const STORAGE_COLOR = 'green';
+/*
+ * Color of storage without a box on it.
+ */
+const STORAGE_COLOR = 'blue';
 
-const OUTLINE_COLOR = 'black';
+/*
+ * Color of the box on storage.
+ */
+const BOX_ON_STORAGE_COLOR = 'green';
 
 /*
  * Color of the wall when looking at it straight on.
@@ -5077,6 +5083,7 @@ const STRAIGHT_COLOR = [169, 169, 169];
 const DIAGONAL_COLOR = [69, 69, 69];
 
 const BACKGROUND_COLOR = 'white';
+const OUTLINE_COLOR = 'black';
 const TEXT_COLOR = 'black';
 const FONT_SIZE = 18;
 
@@ -5096,7 +5103,8 @@ function drawBlock(offset, distance, blockType) {
       wall = new Rect(Math.floor((WIDTH - width) / 2), Math.floor((HEIGHT - height) / 2), width, height),
       nextWidth = width / 2,
       nextHeight = height / 2,
-      nextWall = new Rect(Math.floor((WIDTH - nextWidth) / 2), Math.floor((HEIGHT - nextHeight) / 2), nextWidth, nextHeight);
+      nextWall = new Rect(Math.floor((WIDTH - nextWidth) / 2), Math.floor((HEIGHT - nextHeight) / 2), nextWidth, nextHeight),
+      color;
 
   if ((width < 2) || (height < 2)) {
     // Don't draw the block if it is too far away (too small)
@@ -5119,18 +5127,24 @@ function drawBlock(offset, distance, blockType) {
     screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], DIAGONAL_COLOR);
     screen.draw.filled_rect(wall, STRAIGHT_COLOR);
   }
-  else if (blockType === 'box') {
-    screen.draw.filled_rect(wall, BOX_COLOR);
+  else if ((blockType === 'box') || (blockType === 'box_on_storage')) {
+    if (blockType === 'box_on_storage') {
+      color = BOX_ON_STORAGE_COLOR;
+    }
+    else {
+      color = BOX_COLOR;
+    }
+    screen.draw.filled_rect(wall, color);
     screen.draw.rect(wall, OUTLINE_COLOR);
 
     if (offset < 0) {
       // Draw the right side of the box for a box on the left side
-      screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], BOX_COLOR);
+      screen.draw.filled_polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], color);
       screen.draw.polygon([wall.topright, nextWall.topright, nextWall.bottomright, wall.bottomright], OUTLINE_COLOR);
     }
     else if (offset > 0) {
       // Draw the left side of the box for a box on the right side
-      screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], BOX_COLOR);
+      screen.draw.filled_polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], color);
       screen.draw.polygon([wall.topleft, nextWall.topleft, nextWall.bottomleft, wall.bottomleft], OUTLINE_COLOR);
     }
   }
@@ -5171,17 +5185,25 @@ function draw() {
       yr = y + ((dx * dm) * (i + 1));
 
       if (game.isStorage(xl, yl)) {
-        drawBlock(i, d, 'storage');
-      }
-      if (game.isBox(xl, yl)) {
-        drawBlock(i, d, 'box');
-      }
-      if (game.isWall(xl, yl)) {
-        if (game.isWall(xr, yr)) {
-          drawBlock(i, d, 'center');
+        if (game.isBox(xl, yl)) {
+          drawBlock(i, d, 'box_on_storage');
         }
         else {
-          drawBlock(i, d, 'left');
+          drawBlock(i, d, 'storage');
+        }
+      }
+      else {
+        // Otherwise, (xl, yl) is not storage
+        if (game.isBox(xl, yl)) {
+          drawBlock(i, d, 'box');
+        }
+        if (game.isWall(xl, yl)) {
+          if (game.isWall(xr, yr)) {
+            drawBlock(i, d, 'center');
+          }
+          else {
+            drawBlock(i, d, 'left');
+          }
         }
       }
     }
@@ -5193,29 +5215,45 @@ function draw() {
       yr = y + ((dx * dm) * i);
 
       if (game.isStorage(xr, yr)) {
-        drawBlock(i, d, 'storage');
-      }
-      if (game.isBox(xr, yr)) {
-        drawBlock(i, d, 'box');
-      }
-      if (game.isWall(xr, yr)) {
-        if (game.isWall(xl, yl)) {
-          drawBlock(i, d, 'center');
+        if (game.isBox(xr, yr)) {
+          drawBlock(i, d, 'box_on_storage');
         }
         else {
-          drawBlock(i, d, 'right');
+          drawBlock(i, d, 'storage');
+        }
+      }
+      else {
+        // Otherwise, (xr, yr) is not storage
+        if (game.isBox(xr, yr)) {
+          drawBlock(i, d, 'box');
+        }
+        if (game.isWall(xr, yr)) {
+          if (game.isWall(xl, yl)) {
+            drawBlock(i, d, 'center');
+          }
+          else {
+            drawBlock(i, d, 'right');
+          }
         }
       }
     }
 
     if (game.isStorage(x, y)) {
-      drawBlock(0, d, 'storage');
+      if (game.isBox(x, y)) {
+        drawBlock(0, d, 'box_on_storage');
+      }
+      else {
+        drawBlock(0, d, 'storage');
+      }
     }
-    if (game.isBox(x, y)) {
-      drawBlock(0, d, 'box');
-    }
-    if (game.isWall(x, y)) {
-      drawBlock(0, d, 'center');
+    else {
+      // Otherwise, (x, y) is not storage
+      if (game.isBox(x, y)) {
+        drawBlock(0, d, 'box');
+      }
+      if (game.isWall(x, y)) {
+        drawBlock(0, d, 'center');
+      }
     }
   }
 
