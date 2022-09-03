@@ -109,7 +109,7 @@ function parseLevels(text) {
       // Pad the lines to be the same length
       maxLength = Math.max(...mapLines.map(l => l.length));
       for (let i = 0; i < mapLines.length; i++) {
-        mapLines[i] = mapLines[i].padEnd(maxLength);
+        mapLines[i] = mapLines[i].padEnd(maxLength, EMPTY);
       }
 
       // Convert the lines to column major
